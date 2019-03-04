@@ -1,0 +1,17 @@
+@import "../style/bulma.scss";
+
+.Editor {
+	background-color: $input-background-color;
+}
+
+.Editor.ql-container.ql-snow {
+	border-color: #efefef;
+}
+
+// .Editor .ql-editor {
+// 	//	padding: 0px;
+// }
+
+.Editor.ql-container.ql-snow.focused {
+	border-color: red;
+}

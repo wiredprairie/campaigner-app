@@ -12,7 +12,10 @@ export default function App() {
 				</div>
 			</div>
 			<button className="button is-primary">Click!</button>
+			<h2>Plain Text</h2>
 			<Editor />
+			<h2>Rich text</h2>
+			<Editor plainTextOnly={false} />
 		</div>
 	);
 }
