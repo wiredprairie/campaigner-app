@@ -1,8 +1,8 @@
-import Quill, { Sources, RangeStatic, QuillOptionsStatic } from "quill";
+import Quill, { QuillOptionsStatic, RangeStatic, Sources } from "quill";
 import Delta from "quill-delta";
 import "quill/dist/quill.snow.css";
-import "./Editor.scss";
 import React from "react";
+import "./Editor.scss";
 
 interface Props {
 	plainTextOnly?: boolean;
@@ -21,6 +21,7 @@ export default class Editor extends React.Component<Props, State> {
 
 	private _quillHostElement!: HTMLDivElement | null;
 	private _quill?: Quill;
+	private _quillStandardCssNames: string = "";
 
 	constructor(props: Props) {
 		super(props);
@@ -57,6 +58,9 @@ export default class Editor extends React.Component<Props, State> {
 
 			const quill = new Quill(this._quillHostElement, options);
 			this._quill = quill;
+			// rather than hardcoding the Quill Element CSS class names, grab them after they've
+			// been set. they'll be used later in the control
+			this._quillStandardCssNames = this._quillHostElement.getAttribute("class") || "";
 
 			this.attachQuillEvents(quill);
 		}
@@ -72,15 +76,15 @@ export default class Editor extends React.Component<Props, State> {
 	render() {
 		const { focused } = this.state;
 		return (
-			<div>
+			<>
 				<div
-					className={`Editor ${focused ? " focsued" : ""} `}
+					className={`Editor ${this._quillStandardCssNames}${focused ? " infocus is-focused" : ""} `}
 					ref={r => {
 						this._quillHostElement = r;
 					}}
 				/>
 				<div>{this.state.changeLength}</div>
-			</div>
+			</>
 		);
 	}
 
