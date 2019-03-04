@@ -1,0 +1,31 @@
+{
+	"editor.fontFamily": "Monoid, Consolas, 'Courier New', monospace",
+	"files.exclude": {
+		"**/.git": true,
+		"**/.svn": true,
+		"**/.hg": true,
+		"**/CVS": true,
+		"**/.DS_Store": true,
+		"**/*.js": {
+			"when": "$(basename).ts"
+		},
+		"**/*?.js": {
+			"when": "$(basename).tsx"
+		},
+		"**/*?.jsx": {
+			"when": "$(basename).tsx"
+		},
+		"**/*?.jsx.map": {
+			"when": "$(basename).jsx"
+		},
+		"**/.next": true,
+		"**/*.hot-update.json": true,
+		"**/*.hot-update.js": true,
+		"**/*?.css.map": true,
+		"**/*.css": {
+			"when": "$(basename).scss"
+		},
+		"**/*.js.map": true,
+		"obj": true
+	}
+}
