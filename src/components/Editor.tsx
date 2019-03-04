@@ -17,7 +17,7 @@ export default class Editor extends React.Component<Props, State> {
 		this.state = {
 			text: "",
 			changeLength: 0
-		}; // You can also pass a Quill Delta here
+		};
 		this.onQuillTextChange = this.onQuillTextChange.bind(this);
 	}
 
