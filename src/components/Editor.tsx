@@ -3,6 +3,7 @@ import Delta from "quill-delta";
 import "quill/dist/quill.snow.css";
 import React from "react";
 import "./Editor.scss";
+import toMarkdown from "./utilities/quill-to-markdown";
 
 interface Props {
 	plainTextOnly?: boolean;
@@ -74,7 +75,8 @@ export default class Editor extends React.Component<Props, State> {
 	}
 
 	render() {
-		const { focused } = this.state;
+		const { focused, text } = this.state;
+
 		return (
 			<>
 				<div
@@ -84,6 +86,7 @@ export default class Editor extends React.Component<Props, State> {
 					}}
 				/>
 				<div>{this.state.changeLength}</div>
+				<pre>{text}</pre>
 			</>
 		);
 	}
@@ -122,7 +125,8 @@ export default class Editor extends React.Component<Props, State> {
 
 	private onQuillTextChange(delta: Delta, oldContents: Delta, source: String) {
 		this.setState({
-			changeLength: delta.changeLength()
+			changeLength: delta.changeLength(),
+			text: this._quill ? toMarkdown(this._quill.getContents()) : ""
 		});
 	}
 
