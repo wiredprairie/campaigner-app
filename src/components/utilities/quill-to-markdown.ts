@@ -11,34 +11,9 @@ export default function toMarkdown(delta?: Delta): string {
 		return "";
 	}
 	for (let text of eachRun(delta.ops)) {
-		// console.log(text);
 		results.push(text);
 	}
 	return results.join("");
-}
-
-interface LineRange {
-	start: number;
-	end: number;
-	ops: Op[];
-	attr?: AttributeMap;
-}
-
-function mdLines(ops: Op[]): LineRange[] {
-	const lineRanges: LineRange[] = [];
-	for (let i = 0; i < ops.length; i++) {
-		const line = mdLineScan(ops, i);
-		if (line.index !== -1) {
-			lineRanges.push({
-				start: i,
-				end: line.index,
-				ops: ops.slice(i, line.index),
-				attr: line.attributes
-			});
-			i = line.index + 1;
-		}
-	}
-	return lineRanges;
 }
 
 function* eachRun(ops: Op[]): IterableIterator<string> {
@@ -90,12 +65,7 @@ function* eachRun(ops: Op[]): IterableIterator<string> {
 // look one forward to see if there's a line indicator
 function getLineAttributes(ops: Op[], index: number): AttributeMap | undefined {
 	++index;
-	// if (index < ops.length) {
-	// 	const op = ops[index];
-	// 	if (op.insert === "\n") {
-	// 		return op.attributes;
-	// 	}
-	// }
+
 	for (let i = index; i < ops.length; i++) {
 		const op = ops[i];
 		if (op.insert === "\n") {
@@ -113,55 +83,14 @@ function getLineAttributes(ops: Op[], index: number): AttributeMap | undefined {
 	return;
 }
 
-function getOptionalAttribute(ops: Op[], index: number) {
-	for (let i = index; i < ops.length; i++) {
-		const op = ops[i];
-		if (op.insert === "\n") {
-			return {
-				index: i,
-				attributes: op.attributes
-			};
-		}
-	}
-	return {
-		index: -1,
-		attributes: undefined
-	};
-}
-
-function mdLineScan(ops: Op[], index: number) {
-	for (let i = index; i < ops.length; i++) {
-		const op = ops[i];
-		if (op.insert === "\n") {
-			return {
-				index: i,
-				attributes: op.attributes
-			};
-		}
-
-		if (typeof op.insert === "string") {
-			if (op.insert.indexOf("\n") >= 0) {
-				const splits = op.insert.split("\n");
-			}
-		}
-	}
-	return {
-		index: ops.length,
-		attributes: ops[ops.length - 1]
-	};
-}
-
-// function emitLineRangeText(lineRange: LineRange): string {
-// 	const result: string[] = [];
-// 	for (let i = 0; i < lineRange.ops.length; i++) {
-// 		const op = lineRange.ops[i];
-// 		result.push(mdText(op));
-// 	}
-// 	return result.join("");
-// }
-
 function mdText(op: Op, text: string): string {
 	if (op.attributes) {
+		let trailingSpaces = "";
+		let index = text.length;
+		while (--index > 0 && text[index] === " ") {
+			trailingSpaces += " ";
+		}
+		text = text.slice(0, index + 1);
 		const bold = op.attributes.bold === true;
 		const italic = op.attributes.italic === true;
 		const strikethru = op.attributes.strike === true;
@@ -178,13 +107,15 @@ function mdText(op: Op, text: string): string {
 			text = `~~${text}~~`;
 		}
 
+		if (italic) {
+			text = `_${text}_`;
+		}
+
 		if (bold) {
 			text = `**${text}**`;
 		}
 
-		if (italic) {
-			text = `*${text}*`;
-		}
+		text += trailingSpaces;
 	}
 
 	text = text.replace("\n", "\n\n");
