@@ -1,5 +1,5 @@
-import { readFileSync } from "fs";
-import { join } from "path";
+import { readdirSync, readFileSync } from "fs";
+import * as path from "path";
 import { toHtml } from "../quill-to-html";
 
 // test("adds 1+2", () => {
@@ -10,21 +10,30 @@ test("no delta returns empty", () => {
 	expect(toHtml()).toBe("");
 });
 
-test("test bold and italics.json", () => {
-	const source = readFileSync(join(__dirname, "./test-data/bold-and-italics.json"), "utf-8");
-	let target = readFileSync(join(__dirname, "./test-data/bold-and-italics.html.txt"), "utf-8");
-	target = fixSampleFiles(target);
-	let results = toHtml(JSON.parse(source));
-	expect(results).toBe(target);
-});
+function setupTests(folder: string) {
+	const files = readdirSync(folder, { withFileTypes: true });
+	for (const file of files) {
+		if (file.isFile()) {
+			const possibleMatch = path.parse(file.name);
+			if (possibleMatch.ext === ".json") {
+				const expectedDataFilename = path.join(folder, `${possibleMatch.name}.html.txt`);
+				try {
+					const expectedData = readFileSync(expectedDataFilename, "utf8");
+					const inputData = readFileSync(path.join(folder, possibleMatch.base), "utf8");
+					test(`test: ${possibleMatch.name}`, () => {
+						const expected = fixSampleFiles(expectedData);
+						const input = toHtml(JSON.parse(inputData));
+						expect(input).toBe(expected);
+					});
+				} catch (ex) {
+					console.error(ex);
+				}
+			}
+		}
+	}
+}
 
-test("test simple-headings.json", () => {
-	const source = readFileSync(join(__dirname, "./test-data/simple-headings.json"), "utf-8");
-	let target = readFileSync(join(__dirname, "./test-data/simple-headings.html.txt"), "utf-8");
-	target = fixSampleFiles(target);
-	let results = toHtml(JSON.parse(source));
-	expect(results).toBe(target);
-});
+setupTests(path.join(__dirname, "./__test-data__/"));
 
 function fixSampleFiles(target: string): string {
 	target = target.replace("\n", "");
