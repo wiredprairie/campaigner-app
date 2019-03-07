@@ -1,0 +1,2 @@
+this is <strong>bold</strong>&nbsp;and this is <em>italics. But this is </em><strong><em>both</em></strong
+><em>.</em>

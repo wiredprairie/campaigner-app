@@ -19,6 +19,7 @@ export default function toMarkdown(delta?: Delta): string {
 function* eachRun(ops: Op[]): IterableIterator<string> {
 	for (let line = 0; line < ops.length; line++) {
 		const op = ops[line];
+		const opNext = line + 1 < ops.length ? ops[line + 1] : {};
 		if (typeof op.insert === "string") {
 			if (op.insert === "\n") {
 				yield "\n\n";
@@ -47,7 +48,7 @@ function* eachRun(ops: Op[]): IterableIterator<string> {
 							}
 						} else {
 							if (text !== "") {
-								yield mdText(op, text);
+								yield mdText(op, text, opNext);
 								yield "\n\n";
 							}
 						}
@@ -56,7 +57,7 @@ function* eachRun(ops: Op[]): IterableIterator<string> {
 					}
 				}
 			} else {
-				yield mdText(op, op.insert);
+				yield mdText(op, op.insert, opNext);
 			}
 		}
 	}
@@ -83,7 +84,8 @@ function getLineAttributes(ops: Op[], index: number): AttributeMap | undefined {
 	return;
 }
 
-function mdText(op: Op, text: string): string {
+// https://commonmark.org/help/
+function mdText(op: Op, text: string, nextOp?: Op): string {
 	if (op.attributes) {
 		let trailingSpaces = "";
 		let index = text.length;
@@ -91,28 +93,33 @@ function mdText(op: Op, text: string): string {
 			trailingSpaces += " ";
 		}
 		text = text.slice(0, index + 1);
-		const bold = op.attributes.bold === true;
-		const italic = op.attributes.italic === true;
-		const strikethru = op.attributes.strike === true;
-		const forecolor = op.attributes.color || "";
-		const background = op.attributes.background || "";
-		const script = op.attributes.script || "";
-		const align = op.attributes.align || "";
-		const header = op.attributes.header || "";
-		const link = op.attributes.link || "";
+		const opAttrs = getOpDetails(op.attributes);
+		const prevAttrs = nextOp ? getOpDetails(nextOp.attributes) : {};
 
-		// if we're beyond first line feed, add a paragraph break
+		const formats = [];
 
-		if (strikethru) {
-			text = `~~${text}~~`;
+		if (opAttrs.strikethru) {
+			formats.push(mdTextStrikethru);
 		}
 
-		if (italic) {
-			text = `_${text}_`;
+		if (opAttrs.italic) {
+			formats.push(mdTextItalic);
 		}
 
-		if (bold) {
-			text = `**${text}**`;
+		if (opAttrs.bold) {
+			formats.push(mdTextBold);
+		}
+
+		if (
+			(opAttrs.strikethru && prevAttrs.strikethru) ||
+			(opAttrs.italic && prevAttrs.italic) ||
+			(opAttrs.bold && prevAttrs.bold)
+		) {
+			formats.reverse();
+		}
+
+		for (let formatIndx = 0; formatIndx < formats.length; formatIndx++) {
+			text = formats[formatIndx](text);
 		}
 
 		text += trailingSpaces;
@@ -121,4 +128,26 @@ function mdText(op: Op, text: string): string {
 	text = text.replace("\n", "\n\n");
 
 	return text;
+}
+
+const mdTextBold = (text: string) => `**${text}**`;
+const mdTextItalic = (text: string) => `_${text}_`;
+const mdTextStrikethru = (text: string) => `~~${text}~~`;
+
+function getOpDetails(attr?: AttributeMap) {
+	if (!attr) {
+		return {};
+	}
+
+	return {
+		bold: attr.bold === true,
+		italic: attr.italic === true,
+		strikethru: attr.strike === true,
+		forecolor: attr.color || "",
+		background: attr.background || "",
+		script: attr.script || "",
+		align: attr.align || "",
+		header: attr.header || "",
+		link: attr.link || ""
+	};
 }

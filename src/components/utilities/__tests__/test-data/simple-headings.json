@@ -1,0 +1,31 @@
+{
+	"ops": [
+		{
+			"insert": "Heading 1 "
+		},
+		{
+			"attributes": {
+				"bold": true
+			},
+			"insert": "BOLD"
+		},
+		{
+			"attributes": {
+				"header": 1
+			},
+			"insert": "\n"
+		},
+		{
+			"insert": "Heading 2"
+		},
+		{
+			"attributes": {
+				"header": 2
+			},
+			"insert": "\n"
+		},
+		{
+			"insert": "Normal Text\n\n"
+		}
+	]
+}

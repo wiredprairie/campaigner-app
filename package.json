@@ -1,7 +1,9 @@
 {
 	"scripts": {
 		"dev": "parcel ./src/index.html",
-		"build": "parcel build ./src/index.html"
+		"build": "parcel build ./src/index.html",
+		"test": "jest",
+		"test-watch": "jest --watchAll"
 	},
 	"dependencies": {
 		"bulma": "^0.7.4",
@@ -16,6 +18,11 @@
 		"redux": "^4.0.1"
 	},
 	"devDependencies": {
+		"@babel/core": "^7.3.4",
+		"@babel/preset-env": "^7.3.4",
+		"@babel/preset-react": "^7.0.0",
+		"@babel/preset-typescript": "^7.3.3",
+		"@types/jest": "^24.0.9",
 		"@types/node": "^11.10.4",
 		"@types/quill": "^2.0.2",
 		"@types/react": "^16.8.6",
@@ -24,7 +31,10 @@
 		"@types/react-router": "^4.4.4",
 		"@types/react-router-dom": "^4.3.1",
 		"@types/redux": "^3.6.0",
+		"babel-jest": "^24.3.0",
 		"cssnano": "^4.1.10",
+		"jest": "^24.3.0",
+		"react-test-renderer": "^16.8.4",
 		"sass": "^1.17.2",
 		"typescript": "^3.3.3333"
 	}

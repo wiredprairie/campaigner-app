@@ -1,0 +1,11 @@
+{
+	"ops": [
+		{ "attributes": { "color": "#4a4a4a" }, "insert": "this is " },
+		{ "attributes": { "color": "#363636", "bold": true }, "insert": "bold" },
+		{ "attributes": { "color": "#4a4a4a" }, "insert": " and this is " },
+		{ "attributes": { "color": "#4a4a4a", "italic": true }, "insert": "italics. But this is " },
+		{ "attributes": { "italic": true, "color": "#363636", "bold": true }, "insert": "both" },
+		{ "attributes": { "color": "#4a4a4a", "italic": true }, "insert": "." },
+		{ "insert": "\n" }
+	]
+}
