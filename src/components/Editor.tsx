@@ -73,6 +73,10 @@ export default class Editor extends React.Component<Props, State> {
 				state,
 				dispatchTransaction: (transaction: Transaction) => {
 					this.editorViewOnDispatchTransaction(transaction);
+				},
+				handleDOMEvents: {
+					focus: () => {},
+					blur: () => {}
 				}
 			});
 
