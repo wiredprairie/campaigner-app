@@ -1,6 +1,7 @@
 import { exampleSetup } from "prosemirror-example-setup";
 import "prosemirror-menu/style/menu.css";
 import { DOMParser, Schema } from "prosemirror-model";
+import { schema } from "prosemirror-schema-basic";
 import { EditorState, Transaction } from "prosemirror-state";
 import { EditorView } from "prosemirror-view";
 import "prosemirror-view/style/prosemirror.css";
@@ -29,12 +30,7 @@ const textOnlySchema = new Schema({
 	}
 });
 
-const mySchema = new Schema({
-	nodes: {
-		text: {},
-		doc: { content: "text*" }
-	}
-});
+const mySchema = schema;
 
 export default class Editor extends React.Component<Props, State> {
 	static defaultProps: Props = {
@@ -62,12 +58,11 @@ export default class Editor extends React.Component<Props, State> {
 	}
 
 	componentDidMount() {
+		const selectedSchema = this.props.plainTextOnly ? textOnlySchema : mySchema;
 		if (this._viewHostElement && this._viewContentElement) {
 			const state = EditorState.create({
-				doc: DOMParser.fromSchema(this.props.plainTextOnly ? textOnlySchema : mySchema).parse(
-					this._viewContentElement
-				),
-				plugins: exampleSetup({ schema: mySchema })
+				doc: DOMParser.fromSchema(selectedSchema).parse(this._viewContentElement),
+				plugins: exampleSetup({ schema: selectedSchema })
 			});
 			this._view = new EditorView(this._viewHostElement, {
 				state,
@@ -75,8 +70,14 @@ export default class Editor extends React.Component<Props, State> {
 					this.editorViewOnDispatchTransaction(transaction);
 				},
 				handleDOMEvents: {
-					focus: () => {},
-					blur: () => {}
+					focus: (view, e: Event) => {
+						this.setState({ focused: true });
+						return true;
+					},
+					blur: (view, e: Event) => {
+						this.setState({ focused: false });
+						return true;
+					}
 				}
 			});
 
