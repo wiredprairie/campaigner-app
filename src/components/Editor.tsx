@@ -1,13 +1,14 @@
+import { setBlockType, toggleMark, wrapIn } from "prosemirror-commands";
 import { exampleSetup } from "prosemirror-example-setup";
 import "prosemirror-menu/style/menu.css";
 import { DOMParser, Schema } from "prosemirror-model";
 import { schema } from "prosemirror-schema-basic";
-import { EditorState, Transaction } from "prosemirror-state";
+import { addListNodes } from "prosemirror-schema-list";
+import { EditorState, Plugin, Transaction } from "prosemirror-state";
 import { EditorView } from "prosemirror-view";
 import "prosemirror-view/style/prosemirror.css";
 import React, { useEffect, useRef, useState } from "react";
 import "./Editor.scss";
-import { IFrame } from "./IFrame";
 
 interface Props {
 	plainTextOnly?: boolean;
@@ -32,7 +33,10 @@ const textOnlySchema = new Schema({
 	}
 });
 
-const mySchema = schema;
+const mySchema = new Schema({
+	nodes: addListNodes(schema.spec.nodes as any, "paragraph block*", "block"),
+	marks: schema.spec.marks
+});
 
 export default function Editor(props: Props) {
 	const viewHostElement = useRef<HTMLDivElement>(null);
@@ -108,7 +112,22 @@ export default function Editor(props: Props) {
 			{!view.current && (
 				<iframe sandbox={""}>
 					<div ref={viewContentElement}>
-						<b>what's up</b>
+						<h1>Heading 1</h1>
+						<p>
+							something great! <b>And bolded</b>
+						</p>
+						<ul>
+							<li>
+								First, first, first, first, first, first, first, first, first, first, first, first,{" "}
+								first, first, first, first, first, first, first, first, first, first, and first,{" "}
+							</li>
+							<li>Second</li>
+						</ul>
+						<ol>
+							<li>One</li>
+							<li>Two</li>
+							<li>Three</li>
+						</ol>
 					</div>
 				</iframe>
 			)}{" "}
@@ -127,116 +146,90 @@ function editorViewOnDispatchTransaction(tr: Transaction, inComingState: EditorS
 	};
 }
 
-// export class Editor3 extends React.Component<Props, State> {
-// 	static defaultProps: Props = {
-// 		plainTextOnly: true
-// 	};
+class MenuView {
+	private _dom: HTMLDivElement;
+	private items: MenuItem[];
+	private editorView: EditorView;
 
-// 	private _viewHostElement!: HTMLDivElement | null;
-// 	private _viewContentElement!: HTMLDivElement | null;
+	constructor(items: MenuItem[], editorView: EditorView) {
+		this.items = items;
+		this.editorView = editorView;
 
-// 	private _view?: EditorView;
-// 	private _editorState?: EditorState;
+		this._dom = document.createElement("div");
+		this._dom.className = "menubar";
+		items.forEach(({ dom }) => this._dom.appendChild(dom));
+		this.update();
 
-// 	constructor(props: Props) {
-// 		super(props);
-// 		this.state = {
-// 			contentLength: 0,
-// 			focused: false,
-// 			text: ""
-// 		};
-// 		this.rebinders();
-// 	}
+		this.dom.addEventListener("mousedown", e => {
+			e.preventDefault();
+			editorView.focus();
+			items.forEach(({ command, dom }) => {
+				if (e && dom.contains(e.target as any)) {
+					command(editorView.state, editorView.dispatch, editorView);
+				}
+			});
+		});
+	}
 
-// 	private rebinders() {
-// 		//this.editorViewOnDispatchTransaction = this.editorViewOnDispatchTransaction.bind(this);
-// 	}
+	public get dom(): HTMLDivElement {
+		return this._dom;
+	}
 
-// 	componentDidMount() {
-// 		const selectedSchema = this.props.plainTextOnly ? textOnlySchema : mySchema;
-// 		if (this._viewHostElement && this._viewContentElement) {
-// 			const doc = DOMParser.fromSchema(selectedSchema).parse(this._viewContentElement);
+	update() {
+		this.items.forEach(({ command, dom }) => {
+			let active = command(this.editorView.state, null, this.editorView);
+			dom.style.display = active ? "" : "none";
+		});
+	}
 
-// 			const state = EditorState.create({
-// 				doc,
-// 				plugins: exampleSetup({ schema: selectedSchema })
-// 			});
-// 			this._view = new EditorView(this._viewHostElement, {
-// 				state,
-// 				dispatchTransaction: (transaction: Transaction) => {
-// 					this.editorViewOnDispatchTransaction(transaction);
-// 				},
-// 				handleDOMEvents: {
-// 					focus: (view, e: Event) => {
-// 						this.setState({ focused: true });
+	destroy() {
+		this.dom.remove();
+	}
+}
 
-// 						return true;
-// 					},
-// 					blur: (view, e: Event) => {
-// 						this.setState({ focused: false });
-// 						return true;
-// 					}
-// 				}
-// 			});
+function menuPlugin(items: MenuItem[]) {
+	return new Plugin({
+		view(editorView: EditorView) {
+			let menuView = new MenuView(items, editorView);
+			editorView.dom!.parentNode!.insertBefore(menuView.dom, editorView.dom);
+			return menuView;
+		}
+	});
+}
 
-// 			this.setState({
-// 				editorState: state
-// 			});
-// 		}
-// 	}
+// Helper function to create menu icons
+function icon(text: string, name: string) {
+	const span = document.createElement("span");
+	span.className = "menuicon " + name;
+	span.title = name;
+	span.textContent = text;
+	return span;
+}
 
-// 	componentWillUnmount() {
-// 		if (this._view) {
-// 			this._view.destroy();
-// 			this._view = undefined;
-// 		}
-// 	}
+// Create an icon for a heading at the given level
+function heading(level: number) {
+	return {
+		command: setBlockType(schema.nodes.heading, { level }),
+		dom: icon("H" + level, "heading")
+	};
+}
 
-// 	render() {
-// 		const { focused, text } = this.state;
+// (state: EditorState<S>, dispatch?: (tr: Transaction<S>) => void) => boolean;
+interface MenuItem {
+	command: <S extends Schema = any>(
+		state: EditorState<S>,
+		dispatch?: (tr: Transaction<S>) => void,
+		editorView?: EditorView
+	) => boolean;
+	dom: HTMLElement;
+}
 
-// 		return (
-// 			<>
-// 				<div
-// 					className={`${focused ? " infocus is-focused" : ""} `}
-// 					ref={r => {
-// 						this._viewHostElement = r;
-// 					}}
-// 				/>
-// 				<div
-// 					style={{
-// 						display: "block"
-// 					}}
-// 					ref={r => {
-// 						this._viewContentElement = r;
-// 					}}
-// 				/>
-// 				<div>{this.state.contentLength}</div>
-// 				<pre>{text}</pre>
-
-// 				<IFrame>
-// 					<h1>hello</h1>
-// 				</IFrame>
-// 			</>
-// 		);
-// 	}
-
-// 	private editorViewOnDispatchTransaction(tr: Transaction) {
-// 		if (this.state.editorState) {
-// 			// const s = DOMSerializer.fromSchema(mySchema);
-// 			// const json =
-
-// 			//const text = tr.doc.content
-// 			//const json = JSON.stringify(tr.doc.content.toJSON(), undefined, 2);
-// 			this.setState(state => {
-// 				const editorState = state.editorState!.apply(tr);
-// 				this._view!.updateState(editorState);
-// 				return {
-// 					editorState,
-// 					//					text: json,
-// 					contentLength: tr.doc.content.size
-// 				};
-// 			});
-// 		}
-// 	}
-// }
+let menu = menuPlugin([
+	{ command: toggleMark(schema.marks.strong), dom: icon("B", "strong") },
+	{ command: toggleMark(schema.marks.em), dom: icon("i", "em") },
+	{ command: setBlockType(schema.nodes.paragraph), dom: icon("p", "paragraph") },
+	heading(1),
+	heading(2),
+	heading(3),
+	{ command: wrapIn(schema.nodes.blockquote), dom: icon(">", "blockquote") }
+]);

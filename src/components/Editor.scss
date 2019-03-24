@@ -1,11 +1,47 @@
 @import "../style/bulma.scss";
 
-.ProseMirror-host div[contenteditable="true"] {
-	padding: 4px 6px;
+.ProseMirror-host {
+	div[contenteditable="true"] {
+		padding: 4px 6px;
+	}
 }
 
 .Prosemirror-host .infocus {
 	box-shadow: $input-focus-box-shadow-size rgba($info, 0.25);
 	border-color: $info;
 	border-radius: $input-radius;
+}
+
+.ProseMirror-host {
+	div[contenteditable="true"] {
+		ul {
+			margin-left: 0;
+			padding-left: 1.5em;
+			//list-style-position: inside;
+			li {
+				list-style-type: disc;
+				p {
+					text-indent: 20px;
+					display: inline;
+				}
+			}
+		}
+		ol {
+			list-style-position: inside;
+			li {
+				margin-left: 4px;
+				p {
+					text-indent: 20px;
+					display: inline;
+				}
+			}
+		}
+
+		h1 {
+			font-family: Cambria, Cochin, Georgia, Times, "Times New Roman", serif;
+			font-size: 1.3em;
+			border-bottom: solid 1px rgb(66, 117, 6);
+			font-variant-caps: small-caps;
+		}
+	}
 }
