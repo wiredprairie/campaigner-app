@@ -1,18 +1,10 @@
 @import "../style/bulma.scss";
 
-.Editor {
-	background-color: $input-background-color;
+.ProseMirror-host div[contenteditable="true"] {
+	padding: 4px 6px;
 }
 
-// .Editor.ql-container.ql-snow {
-// 	//border-color: #efefef;
-// }
-
-// .Editor .ql-editor {
-// 	//	padding: 0px;
-// }
-
-.Editor.ql-container.ql-snow.infocus {
+.Prosemirror-host .infocus {
 	box-shadow: $input-focus-box-shadow-size rgba($info, 0.25);
 	border-color: $info;
 	border-radius: $input-radius;

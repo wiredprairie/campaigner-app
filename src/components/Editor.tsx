@@ -34,80 +34,30 @@ const textOnlySchema = new Schema({
 
 const mySchema = schema;
 
-// function useProseMirror(isPlainText: boolean) {
-// 	const viewHostElement = useRef<HTMLDivElement>(null);
-// 	const viewContentElement = useRef<HTMLDivElement>(null);
-
-// 	const [view, setView] = useState<EditorView>();
-// 	const [editorState, setEditorState] = useState<EditorState>();
-
-// 	useEffect(() => {
-// 		const selectedSchema = isPlainText ? textOnlySchema : mySchema;
-// 		if (viewHostElement.current && viewContentElement.current) {
-// 			const doc = DOMParser.fromSchema(selectedSchema).parse(viewContentElement.current);
-
-// 			const initialState = EditorState.create({
-// 				doc,
-// 				plugins: exampleSetup({ schema: selectedSchema })
-// 			});
-// 			setEditorState(initialState);
-// 			setView(
-// 				new EditorView(viewHostElement.current, {
-// 					state: initialState,
-// 					dispatchTransaction: (transaction: Transaction) => {
-// 						if (editorState) {
-// 							const { state, contentLength } = editorViewOnDispatchTransaction(transaction, editorState);
-// 							if (view) {
-// 								view.updateState(state);
-// 							}
-// 							setEditorState(state);
-// 							setContentLength(contentLength);
-// 						}
-// 					},
-// 					handleDOMEvents: {
-// 						focus: (view, e: Event) => {
-// 							setFocused(true);
-// 							return true;
-// 						},
-// 						blur: (view, e: Event) => {
-// 							setFocused(false);
-// 							return true;
-// 						}
-// 					}
-// 				})
-// 			);
-// 		}
-
-// 		return () => {
-// 			if (view) {
-// 				view.destroy();
-// 				setView(undefined);
-// 			}
-// 		};
-// 	});
-
-// 	return [viewHostElement, viewContentElement];
-// }
-
 export default function Editor(props: Props) {
 	const viewHostElement = useRef<HTMLDivElement>(null);
 	const viewContentElement = useRef<HTMLDivElement>(null);
 
-	const [view, setView] = useState<EditorView>();
-	const [editorState, setEditorState] = useState<EditorState>();
+	const view = useRef<EditorView>();
+
+	const editorState = useRef<EditorState>();
 	const [contentLength, setContentLength] = useState(0);
 	const [text, setText] = useState("");
 	const [focused, setFocused] = useState(false);
 
+	// useEffect captures the closured variables in the first pass and always
+	// executes with that context
 	useEffect(() => {
 		function dispatchTransaction(transaction: Transaction) {
-			const { state, contentLength } = editorViewOnDispatchTransaction(transaction, editorState!);
-			view!.updateState(state);
-			setEditorState(state);
-			setContentLength(contentLength);
+			if (view.current && editorState.current) {
+				const { state, contentLength } = editorViewOnDispatchTransaction(transaction, editorState.current);
+				view.current.updateState(state);
+				editorState.current = state;
+				setContentLength(contentLength);
+			}
 		}
 
-		if (!view) {
+		if (!view.current) {
 			const selectedSchema = props.plainTextOnly ? textOnlySchema : mySchema;
 			const doc = DOMParser.fromSchema(selectedSchema).parse(viewContentElement.current!);
 
@@ -130,32 +80,41 @@ export default function Editor(props: Props) {
 					}
 				}
 			});
-			setView(newView);
-			setEditorState(initialState);
+			view.current = newView;
+			editorState.current = initialState;
 		}
+	}, [contentLength]);
 
+	// by referencing the empty array as the dependencies, it's saying that it has none
+	// so, it only executes when the current component needs to unload
+	useEffect(() => {
 		return () => {
-			if (view) {
-				view.destroy();
+			if (view.current) {
+				view.current.destroy();
 			}
 		};
-	});
+	}, []);
 
 	return (
 		<>
-			<div className={`${focused ? " infocus is-focused" : ""} `} ref={viewHostElement} />
+			<div className="ProseMirror-host" ref={viewHostElement} />
 			<div
 				style={{
 					display: "block"
 				}}
-				ref={viewContentElement}
 			/>
 			<div>{contentLength}</div>
 			<pre>{text}</pre>
-
-			<IFrame>
+			{!view.current && (
+				<iframe sandbox={""}>
+					<div ref={viewContentElement}>
+						<b>what's up</b>
+					</div>
+				</iframe>
+			)}{" "}
+			{/* <IFrame ref={viewContentElement}>
 				<h1>hello</h1>
-			</IFrame>
+			</IFrame> */}
 		</>
 	);
 }
