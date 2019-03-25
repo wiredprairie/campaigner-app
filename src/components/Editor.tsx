@@ -177,7 +177,7 @@ class MenuView {
 
 	update() {
 		this.items.forEach(({ command, dom }) => {
-			let active = command(this.editorView.state, null, this.editorView);
+			let active = command(this.editorView.state, undefined, this.editorView);
 			dom.style.display = active ? "" : "none";
 		});
 	}
@@ -216,12 +216,13 @@ function heading(level: number) {
 
 // (state: EditorState<S>, dispatch?: (tr: Transaction<S>) => void) => boolean;
 interface MenuItem {
-	command: <S extends Schema = any>(
-		state: EditorState<S>,
-		dispatch?: (tr: Transaction<S>) => void,
-		editorView?: EditorView
-	) => boolean;
+	// command: (...args: any[]) => boolean;
+	command: Command;
 	dom: HTMLElement;
+}
+
+interface Command<S extends Schema<any, any> = Schema<any, any>> extends ReturnType<typeof toggleMark> {
+	(state: EditorState<S>, dispatch?: (tr: Transaction<S>) => void, extra?: unknown): boolean;
 }
 
 let menu = menuPlugin([
